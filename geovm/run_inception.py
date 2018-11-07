@@ -32,16 +32,27 @@ def get_processed_image(img_path):
     return im
 
 
-if __name__ == "__main__":
+def remove_broken_links(fn, threshold=5000):
+    # Get the size of an image in bytes, anything less than 5000 bytes is a broken link
+    if os.stat(fn).st_size < threshold:
+        os.remove(fn)
+
+
+def main():
     # https://medium.com/@vijayabhaskar96/tutorial-on-keras-flow-from-dataframe-1fd4493d237c
     # Use better and more images, at least take the ones without anything
     """TODO: Save only weights from geolocation regression model. Try sigmoid activation * max_value"""
+
+    image_dir = "images/"
+    metadata_dir = "photo_metadata.csv"
+    wp = "weights/inception-v4_weights_tf_dim_ordering_tf_kernels_notop.h5"
+
     # Create model and load pre-trained weights
-    model = inception_v4.create_model(weights='imagenet', include_top=False)
+    model = inception_v4.create_model(weights='imagenet', include_top=False, weights_path=wp)
 
     # Freeze the inception base, going to just train the dense network
-    for i in range(0, len(model.layers) - 1):
-        model.layers[i].trainable = False
+    # for i in range(0, len(model.layers) - 1):
+    #     model.layers[i].trainable = False
 
     model.compile(optimizer='rmsprop', loss='mse')
 
@@ -50,7 +61,7 @@ if __name__ == "__main__":
     train_val_ratio = 0.8
     end = int(size * train_test_ratio)
     mid = int(end * train_val_ratio)
-    df = pd.read_csv("photo_metadata.csv", nrows=size)
+    df = pd.read_csv(metadata_dir, nrows=size)
 
     train_df = df[:mid]
     validtion_df = df[mid:end]
@@ -60,7 +71,7 @@ if __name__ == "__main__":
 
     train_generator = datagen.flow_from_dataframe(
         dataframe=train_df,
-        directory="images/",
+        directory=image_dir,
         x_col="id",
         y_col=["latitude", "longitude"],
         has_ext=False,
@@ -72,7 +83,7 @@ if __name__ == "__main__":
 
     valid_generator = datagen.flow_from_dataframe(
         dataframe=validtion_df,
-        directory="images/",
+        directory=image_dir,
         x_col="id",
         y_col=["latitude", "longitude"],
         has_ext=False,
@@ -84,7 +95,7 @@ if __name__ == "__main__":
 
     test_generator = datagen.flow_from_dataframe(
         dataframe=test_df,
-        directory="images/",
+        directory=image_dir,
         x_col="id",
         y_col=None,
         has_ext=False,
@@ -113,9 +124,12 @@ if __name__ == "__main__":
     test_generator.reset()
     pred = model.predict_generator(test_generator, verbose=1)
 
-    model.save("geolocation_model_1000images.h5")
-    with open("history", 'wb') as f:
-        pickle.dump(history, f)
+    # model.save("geolocation_model_1000images.h5")
+    # with open("history", 'wb') as f:
+    #     pickle.dump(history, f)
+
+    # with open('history', 'rb') as f:
+    #     history = pickle.load(f)
 
     # Open Class labels dictionary. (human readable label given ID)
     # classes = eval(open('validation_utils/class_names.txt', 'r').read())
@@ -128,3 +142,7 @@ if __name__ == "__main__":
     # preds = model.predict(img)
     # print("Class is: " + classes[np.argmax(preds) - 1])
     # print("Certainty is: " + str(preds[0][np.argmax(preds)]))
+
+
+if __name__ == "__main__":
+    main()

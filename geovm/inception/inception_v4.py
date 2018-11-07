@@ -239,7 +239,7 @@ def inception_v4_base(input):
     return net
 
 
-def inception_v4(num_classes, dropout_keep_prob, weights, include_top):
+def inception_v4(num_classes, dropout_keep_prob, weights, include_top, weights_path):
     '''
     Creates the inception v4 network
 
@@ -301,10 +301,10 @@ def inception_v4(num_classes, dropout_keep_prob, weights, include_top):
             #     WEIGHTS_PATH_NO_TOP,
             #     cache_subdir='models',
             #     md5_hash='9296b46b5971573064d12e4669110969')
-            weights_path = "weights/inception-v4_weights_tf_dim_ordering_tf_kernels_notop.h5"
+            print("Loading model")
         model.load_weights(weights_path, by_name=True)
     return model
 
 
-def create_model(num_classes=1001, dropout_prob=0.2, weights=None, include_top=True):
-    return inception_v4(num_classes, dropout_prob, weights, include_top)
+def create_model(num_classes=1001, dropout_prob=0.2, weights=None, include_top=True, weights_path="weights/inception-v4_weights_tf_dim_ordering_tf_kernels_notop.h5"):
+    return inception_v4(num_classes, dropout_prob, weights, include_top, weights_path)
