@@ -306,5 +306,5 @@ def inception_v4(num_classes, dropout_keep_prob, weights, include_top, weights_p
     return model
 
 
-def create_model(num_classes=1001, dropout_prob=0.2, weights=None, include_top=True, weights_path="weights/inception-v4_weights_tf_dim_ordering_tf_kernels_notop.h5"):
+def create_model(num_classes=1001, dropout_prob=0.2, weights=None, include_top=True, weights_path="network-weights/inception-v4_weights_tf_dim_ordering_tf_kernels_notop.h5"):
     return inception_v4(num_classes, dropout_prob, weights, include_top, weights_path)

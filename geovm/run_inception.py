@@ -43,9 +43,9 @@ def main():
     # Use better and more images, at least take the ones without anything
     """TODO: Save only weights from geolocation regression model. Try sigmoid activation * max_value"""
 
-    image_dir = "images/"
-    metadata_dir = "photo_metadata.csv"
-    wp = "weights/inception-v4_weights_tf_dim_ordering_tf_kernels_notop.h5"
+    image_dir = "geoimages_all/images/"
+    metadata_dir = "geoimages_regional/photo_metadata.csv"
+    wp = "network-weights/inception-v4_weights_tf_dim_ordering_tf_kernels_notop.h5"
 
     # Create model and load pre-trained weights
     model = inception_v4.create_model(weights='imagenet', include_top=False, weights_path=wp)
