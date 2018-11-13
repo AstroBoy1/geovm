@@ -43,9 +43,10 @@ def main():
     # Use better and more images, at least take the ones without anything
     """TODO: Save only weights from geolocation regression model. Try sigmoid activation * max_value"""
 
-    image_dir = "geoimages_all/images/"
+    image_dir = "geoimages_all/"
     metadata_dir = "geoimages_regional/photo_metadata.csv"
     wp = "network-weights/inception-v4_weights_tf_dim_ordering_tf_kernels_notop.h5"
+    epochs = 20
 
     # Create model and load pre-trained weights
     model = inception_v4.create_model(weights='imagenet', include_top=False, weights_path=wp)
@@ -56,7 +57,7 @@ def main():
 
     model.compile(optimizer='rmsprop', loss='mse')
 
-    size = 1000
+    size = 10000
     train_test_ratio = 0.8
     train_val_ratio = 0.8
     end = int(size * train_test_ratio)
@@ -109,7 +110,7 @@ def main():
     STEP_SIZE_VALID = valid_generator.n // valid_generator.batch_size
     start = time.time()
     history = model.fit_generator(generator=train_generator, steps_per_epoch=STEP_SIZE_TRAIN,
-                                  validation_data=valid_generator, validation_steps=STEP_SIZE_VALID, epochs=5)
+                                  validation_data=valid_generator, validation_steps=STEP_SIZE_VALID, epochs=epochs)
     end = time.time()
     print("Time to train", round(end - start))
 
