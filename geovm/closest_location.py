@@ -1,12 +1,24 @@
 import pandas as pd
+import sys, getopt
 
 
-def main():
+def main(argv):
     """TODO: Need to ensure that the files returned are in the GCS"""
+    fn = "geoimages_regional/photo_metadata.csv"
+
+    try:
+        opts, args = getopt.getopt(argv, "i:", ["ifile="])
+    except getopt.GetoptError:
+        print("Incorrect options")
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt in ("-i", "--ifile"):
+            fn = arg
+    print("File name", fn)
     latitude = 43.5
     longitude = 75.2
     chunks = 1000
-    reader = pd.read_csv("photo_metadata.csv", chunksize=chunks)
+    reader = pd.read_csv(fn, chunksize=chunks)
     count = 0
     best_distance = float('inf')
     best_index = 0
@@ -36,4 +48,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])
