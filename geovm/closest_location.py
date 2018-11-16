@@ -3,11 +3,11 @@ import sys, getopt
 
 
 def main(argv):
-    """TODO: Need to ensure that the files returned are in the GCS"""
+    """TODO:just take the first 10k files and also open up the images"""
     fn = "geoimages_regional/photo_metadata.csv"
 
     try:
-        opts, args = getopt.getopt(argv, "i:", ["ifile="])
+        opts, args = getopt.getopt(argv, "i", ["ifile="])
     except getopt.GetoptError:
         print("Incorrect options")
         sys.exit(2)
@@ -27,24 +27,26 @@ def main(argv):
     fn_list = []
     distance_list = []
 
-    for index, df in enumerate(reader):
-        for i in range(chunks * index, chunks * index + len(df)):
-            count += 1
-            lat = df['latitude'][i]
-            lon = df['longitude'][i]
-            fn_list.append(df['id'][i])
+    for chunk_index, df in enumerate(reader):
+        print("Chunk #:", chunk_index)
+        df = df.sample(frac=0.1, replace=False)
+        for index, row in df.iterrows():
+            lat = row['latitude']
+            lon = row['longitude']
+            fn_list.append(row['id'])
             distance = pow(pow((latitude - lat), 2) + pow((longitude - lon), 2), 1/2)
             distance_list.append(distance)
             if distance < best_distance:
                 best_distance = distance
-                best_index = i
-        if count > 100000:
+                best_index = index
+        if chunk_index > 1000:
             break
     print("Closest distance:", best_distance)
     print("Index", best_index)
     df_distance['id'] = fn_list
     df_distance['distance'] = distance_list
     sorted_df = df_distance.sort_values(by='distance', ascending=True)
+    sorted_df.to_csv("close_images.csv")
 
 
 if __name__ == "__main__":
