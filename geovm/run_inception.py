@@ -46,18 +46,18 @@ def main():
     image_dir = "geoimages_all/"
     metadata_dir = "geoimages_regional/photo_metadata.csv"
     wp = "network-weights/inception-v4_weights_tf_dim_ordering_tf_kernels_notop.h5"
-    epochs = 20
+    epochs = 1
 
     # Create model and load pre-trained weights
     model = inception_v4.create_model(weights='imagenet', include_top=False, weights_path=wp)
 
     # Freeze the inception base, going to just train the dense network
-    # for i in range(0, len(model.layers) - 1):
-    #     model.layers[i].trainable = False
+    for i in range(0, len(model.layers) - 1):
+         model.layers[i].trainable = False
 
     model.compile(optimizer='rmsprop', loss='mse')
 
-    size = 10000
+    size = 500
     train_test_ratio = 0.8
     train_val_ratio = 0.8
     end = int(size * train_test_ratio)
@@ -74,9 +74,9 @@ def main():
         dataframe=train_df,
         directory=image_dir,
         x_col="id",
-        y_col=["latitude", "longitude"],
+        y_col="latitude",
         has_ext=False,
-        batch_size=2,
+        batch_size=32,
         seed=42,
         shuffle=True,
         class_mode="other",
@@ -86,9 +86,9 @@ def main():
         dataframe=validtion_df,
         directory=image_dir,
         x_col="id",
-        y_col=["latitude", "longitude"],
+        y_col="latitude",
         has_ext=False,
-        batch_size=2,
+        batch_size=32,
         seed=42,
         shuffle=True,
         class_mode="other",
@@ -114,18 +114,20 @@ def main():
     end = time.time()
     print("Time to train", round(end - start))
 
-    plt.plot(history.history['loss'], label='Training loss')
-    plt.plot(history.history['val_loss'], 'b', label='Validation loss')
-    plt.title('Model Loss')
-    plt.ylabel('RMSE')
-    plt.xlabel('Epoch')
-    plt.legend(['Train', 'Validation'], loc='upper left')
-    plt.show()
+    #plt.plot(history.history['loss'], label='Training loss')
+    #plt.plot(history.history['val_loss'], 'b', label='Validation loss')
+    #plt.title('Model Loss')
+    #plt.ylabel('RMSE')
+    #plt.xlabel('Epoch')
+    #plt.legend(['Train', 'Validation'], loc='upper left')
+    #plt.show()
 
-    test_generator.reset()
-    pred = model.predict_generator(test_generator, verbose=1)
+    #test_generator.reset()
+    # pred = model.predict_generator(test_generator, verbose=1)
 
-    # model.save("geolocation_model_1000images.h5")
+    model.save("network-weights/geo_regression.h5")
+    print("Saved model")
+    K.clear_session()
     # with open("history", 'wb') as f:
     #     pickle.dump(history, f)
 
@@ -143,7 +145,6 @@ def main():
     # preds = model.predict(img)
     # print("Class is: " + classes[np.argmax(preds) - 1])
     # print("Certainty is: " + str(preds[0][np.argmax(preds)]))
-
 
 if __name__ == "__main__":
     main()
