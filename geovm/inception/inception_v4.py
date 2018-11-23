@@ -19,7 +19,7 @@ import numpy as np
 import warnings
 # Keras Core
 from keras.layers.convolutional import MaxPooling2D, Convolution2D, AveragePooling2D
-from keras.layers import Input, Dropout, Dense, Flatten, Activation
+from keras.layers import Input, Dropout, Dense, Flatten, Activation, Lambda
 from keras.layers.normalization import BatchNormalization
 from keras.layers.merge import concatenate
 from keras import regularizers
@@ -274,8 +274,12 @@ def inception_v4(num_classes, dropout_keep_prob, weights, include_top, weights_p
     x = AveragePooling2D((8, 8), padding='valid')(x)
     # x = Dropout(dropout_keep_prob)(x)
     x = Flatten()(x)
-    predictions = Dense(2)(x)
-    model = Model(inputs, predictions, name='inception_v4')
+    # predictions = Dense(2)(x)
+    lat_pred = Dense(2)(x)
+    # x = Dense(1, activation='tanh')(x)
+    # lat_pred = Lambda(lambda x: x * 90)(x)
+    # lon_pred = Dense(1, activation='tanh')(x)
+    model = Model(inputs, outputs=lat_pred, name='inception_v4')
 
     # load weights
     if weights == 'imagenet':

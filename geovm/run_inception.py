@@ -74,7 +74,7 @@ def main():
         dataframe=train_df,
         directory=image_dir,
         x_col="id",
-        y_col="latitude",
+        y_col=["latitude","longitude"],
         has_ext=False,
         batch_size=32,
         seed=42,
@@ -86,7 +86,7 @@ def main():
         dataframe=validtion_df,
         directory=image_dir,
         x_col="id",
-        y_col="latitude",
+        y_col=["latitude", "longitude"],
         has_ext=False,
         batch_size=32,
         seed=42,
@@ -125,7 +125,7 @@ def main():
     #test_generator.reset()
     # pred = model.predict_generator(test_generator, verbose=1)
 
-    model.save("network-weights/geo_regression.h5")
+    model.save("network-weights/geo_regression_latlong.h5")
     print("Saved model")
     K.clear_session()
     # with open("history", 'wb') as f:
