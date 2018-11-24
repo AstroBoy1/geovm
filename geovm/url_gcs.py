@@ -7,21 +7,17 @@ import sys
 
 def download_image(fn, chunk=10, number=100):
     """Download images locally from csv file with id and url column"""
-    reader = pd.read_csv(fn, chunksize=chunk)
-    count = 0
-    start = time.time()
-    for df in reader:
-        for i in range(len(df)):
-            url = df["url"][i + count]
-            urllib.request.urlretrieve(url, "images/" + str(df["id"][i + count]) + ".jpg")
-        count += chunk
-        print(count)
-        if count > number:
-            break
-    end = time.time()
-    with open('timing.csv', 'w', newline='') as f:
+    with open('download_log.csv', 'w', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow([10, "seconds"])
+        reader = pd.read_csv(fn, chunksize=chunk)
+        count = 0
+        start = time.time()
+        for df in reader:
+            for i in range(len(df)):
+                url = df["url"][i + count]
+                urllib.request.urlretrieve(url, "geoimages_all/" + str(df["id"][i + count]) + ".jpg")
+            count += chunk
+            writer.writerow([count, "images"])
 
 
 def main():
@@ -32,7 +28,7 @@ def main():
         c = int(params[0])
     if len(params) == 2:
         n = int(params[1])
-    download_image("urls.csv", c, n)
+    download_image("geoimages_regional/urls.csv", c, n)
 
 
 if __name__ == "__main__":
