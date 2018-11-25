@@ -3,20 +3,14 @@ import sys, getopt
 from PIL import Image
 
 
-def predict(fn, image_fn, latitude, longitude, output_fn, chunks, n_images):
+def closest(fn="geoimages_regional/10kimages.csv", image_fn= "images.csv", latitude=43.5, longitude=75.2, output_fn= "closest_location_output.csv", chunks=1000, n_images=10, im_out="closest_images"):
     """Finds the closest images to the input
     i: input file that contains the images with lat, long, id, and accuracy
     a: latitude
     l: longitude
     o: output filename
-    Returns: sorted dataframe of closest images"""
-    fn = "geoimages_regional/10kimages.csv"
-    image_fn = "images.csv"
-    latitude = 43.5
-    longitude = 75.2
-    output_fn = "closest_location_output.csv"
+    Returns: sorted dataframe of closest images""" 
     
-    chunks = 1000
     reader = pd.read_csv(fn, chunksize=chunks)
     count = 0
     best_distance = float('inf')
@@ -41,10 +35,11 @@ def predict(fn, image_fn, latitude, longitude, output_fn, chunks, n_images):
         if chunk_index > 1000:
             break
     print("Closest distance:", best_distance)
-    print("Index", best_index)
+    #print("Index", best_index)
     df_distance['id'] = fn_list
     df_distance['distance'] = distance_list
     sorted_df = df_distance.sort_values(by='distance', ascending=True)
+    #sorted_df = sorted_df[:n_images]
     print("sorted values")
     sorted_df.to_csv(output_fn)
     count = 0
@@ -54,9 +49,9 @@ def predict(fn, image_fn, latitude, longitude, output_fn, chunks, n_images):
             fn = str(sorted_df['id'][i]) + ".jpg"
             try:
                 im = Image.open("geoimages_all" + "/" + fn)
-                im.save("closest_images" + "/" + fn)
+                im.save(im_out + "/" + fn)
                 count += 1
-                if count > 10:
+                if count > n_images:
                     break
             except FileNotFoundError:
                 print("File not found", fn)
@@ -139,5 +134,6 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    #main(sys.argv[1:])
+    closest()
 

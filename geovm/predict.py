@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import pickle
 import time
 from keras.models import load_model
+from closest_location import closest
 
 # If you want to use a GPU set its index here
 os.environ['CUDA_VISIBLE_DEVICES'] = ''
@@ -24,6 +25,7 @@ def main():
     metadata_dir = "geoimages_regional/photo_metadata.csv"
     model_fn = "network-weights/geo_regression_latlong.h5"
     size = 10
+    find_closest = True
 
     # Contains the image file names, along with the targets
     # batch size needs to be a multiple of the # of images
@@ -46,7 +48,14 @@ def main():
     print("Loaded model")
     pred = model.predict_generator(test_generator, verbose=1, steps=STEP_SIZE_TEST)
     print("Finished predicting")
-    print(pred)
+    #print(list(pred))
+    for pair in list(pred):
+        latitude = pair[0]
+        longitude = pair[1]
+        print(latitude, longitude)
+        if find_closest:
+            output_fn = "closest_image_dfs/" + str(round(latitude)) + str(round(longitude)) + ".csv"
+            closest(latitude=latitude, longitude=longitude, output_fn=output_fn)
     K.clear_session()
 
 

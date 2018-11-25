@@ -14,9 +14,11 @@ def download_image(fn, chunk=10, number=100):
         start = time.time()
         for df in reader:
             for i in range(len(df)):
+                #print(i)
                 url = df["url"][i + count]
                 urllib.request.urlretrieve(url, "geoimages_all/" + str(df["id"][i + count]) + ".jpg")
             count += chunk
+            print(count)
             writer.writerow([count, "images"])
 
 
