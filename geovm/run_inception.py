@@ -10,13 +10,13 @@ import numpy as np
 import cv2
 import os
 from keras.preprocessing.image import ImageDataGenerator
+from keras import callbacks
 import pandas as pd
-import matplotlib.pyplot as plt
 import pickle
 import time
 
 # If you want to use a GPU set its index here
-os.environ['CUDA_VISIBLE_DEVICES'] = ''
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 
 def get_processed_image(img_path):
@@ -46,23 +46,30 @@ def main():
     image_dir = "geoimages_all/"
     metadata_dir = "geoimages_regional/photo_metadata.csv"
     wp = "network-weights/inception-v4_weights_tf_dim_ordering_tf_kernels_notop.h5"
-    epochs = 1
+    epochs = 100
+    output_fn = "network-weights/100kimages_model.h5"
+    history_fn = "network-weights/history_100k"
 
     # Create model and load pre-trained weights
     model = inception_v4.create_model(weights='imagenet', include_top=False, weights_path=wp)
+    print("loaded model")
+
+    callbacks_list = [callbacks.EarlyStopping(monitor='val_loss', patience=10), callbacks.ModelCheckpoint(filepath=output_fn, monitor='val_loss', save_best_only=True,), callbacks.TensorBoard(log_dir='my_log_dir']
 
     # Freeze the inception base, going to just train the dense network
-    for i in range(0, len(model.layers) - 1):
-         model.layers[i].trainable = False
+    #for i in range(0, len(model.layers) - 1):
+         #model.layers[i].trainable = False
 
     model.compile(optimizer='rmsprop', loss='mse')
+    print("compiled model")
 
-    size = 500
+    size = 100000
     train_test_ratio = 0.8
     train_val_ratio = 0.8
     end = int(size * train_test_ratio)
     mid = int(end * train_val_ratio)
     df = pd.read_csv(metadata_dir, nrows=size)
+    print("read csv")
 
     train_df = df[:mid]
     validtion_df = df[mid:end]
@@ -76,7 +83,7 @@ def main():
         x_col="id",
         y_col=["latitude","longitude"],
         has_ext=False,
-        batch_size=32,
+        batch_size=2,
         seed=42,
         shuffle=True,
         class_mode="other",
@@ -88,7 +95,7 @@ def main():
         x_col="id",
         y_col=["latitude", "longitude"],
         has_ext=False,
-        batch_size=32,
+        batch_size=2,
         seed=42,
         shuffle=True,
         class_mode="other",
@@ -100,7 +107,7 @@ def main():
         x_col="id",
         y_col=None,
         has_ext=False,
-        batch_size=32,
+        batch_size=1,
         seed=42,
         shuffle=False,
         class_mode=None,
@@ -110,7 +117,7 @@ def main():
     STEP_SIZE_VALID = valid_generator.n // valid_generator.batch_size
     start = time.time()
     history = model.fit_generator(generator=train_generator, steps_per_epoch=STEP_SIZE_TRAIN,
-                                  validation_data=valid_generator, validation_steps=STEP_SIZE_VALID, epochs=epochs)
+                                  validation_data=valid_generator, validation_steps=STEP_SIZE_VALID, epochs=epochs, callbacks=callbacks_list)
     end = time.time()
     print("Time to train", round(end - start))
 
@@ -122,29 +129,18 @@ def main():
     #plt.legend(['Train', 'Validation'], loc='upper left')
     #plt.show()
 
-    #test_generator.reset()
     # pred = model.predict_generator(test_generator, verbose=1)
 
-    model.save("network-weights/geo_regression_latlong.h5")
-    print("Saved model")
+    #model.save("network-weights/geo_regression_latlong3.h5")
+    #print("Saved model")
+    with open(history_fn, 'wb') as f:
+        pickle.dump(history, f)
+    print("saved model")
+    evaluation = model.evaluate_generator(test_generator, verbose=1)
+    print("evaluated model")
     K.clear_session()
-    # with open("history", 'wb') as f:
-    #     pickle.dump(history, f)
 
-    # with open('history', 'rb') as f:
-    #     history = pickle.load(f)
-
-    # Open Class labels dictionary. (human readable label given ID)
-    # classes = eval(open('validation_utils/class_names.txt', 'r').read())
-
-    # Load test image!
-    # img_path = 'elephant.jpg'
-    # img = get_processed_image(img_path)
-
-    # Run prediction on test image
-    # preds = model.predict(img)
-    # print("Class is: " + classes[np.argmax(preds) - 1])
-    # print("Certainty is: " + str(preds[0][np.argmax(preds)]))
 
 if __name__ == "__main__":
     main()
+

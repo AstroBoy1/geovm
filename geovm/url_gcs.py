@@ -16,7 +16,10 @@ def download_image(fn, chunk=10, number=100):
             for i in range(len(df)):
                 #print(i)
                 url = df["url"][i + count]
-                urllib.request.urlretrieve(url, "geoimages_all/" + str(df["id"][i + count]) + ".jpg")
+                try:
+                    urllib.request.urlretrieve(url, "geoimages_all/" + str(df["id"][i + count]) + ".jpg")
+                except OSError:
+                    print("OSError: Input/output")
             count += chunk
             print(count)
             writer.writerow([count, "images"])
