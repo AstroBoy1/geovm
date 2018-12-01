@@ -47,23 +47,23 @@ def main():
     metadata_dir = "geoimages_regional/photo_metadata.csv"
     wp = "network-weights/inception-v4_weights_tf_dim_ordering_tf_kernels_notop.h5"
     epochs = 100
-    output_fn = "network-weights/100kimages_model.h5"
-    history_fn = "network-weights/history_100k"
+    output_fn = "network-weights/10kimages__100epochs_all_model.h5"
+    history_fn = "network-weights/history_10k_100epochs_all"
 
     # Create model and load pre-trained weights
     model = inception_v4.create_model(weights='imagenet', include_top=False, weights_path=wp)
     print("loaded model")
 
-    callbacks_list = [callbacks.EarlyStopping(monitor='val_loss', patience=10), callbacks.ModelCheckpoint(filepath=output_fn, monitor='val_loss', save_best_only=True,), callbacks.TensorBoard(log_dir='my_log_dir']
+    callbacks_list = [callbacks.EarlyStopping(monitor='val_loss', patience=10), callbacks.ModelCheckpoint(filepath=output_fn, monitor='val_loss', save_best_only=True,), callbacks.TensorBoard(log_dir='my_log_dir')]
 
     # Freeze the inception base, going to just train the dense network
-    #for i in range(0, len(model.layers) - 1):
-         #model.layers[i].trainable = False
+    for i in range(0, len(model.layers) - 1):
+         model.layers[i].trainable = False
 
     model.compile(optimizer='rmsprop', loss='mse')
     print("compiled model")
 
-    size = 100000
+    size = 10000
     train_test_ratio = 0.8
     train_val_ratio = 0.8
     end = int(size * train_test_ratio)
@@ -75,7 +75,8 @@ def main():
     validtion_df = df[mid:end]
     test_df = df[end:]
 
-    datagen = ImageDataGenerator(rescale=1. / 255.)
+
+    datagen = ImageDataGenerator(rescale=1. / 255., featurewise_center=True, featurewise_std_normalization=True)
 
     train_generator = datagen.flow_from_dataframe(
         dataframe=train_df,
@@ -83,7 +84,7 @@ def main():
         x_col="id",
         y_col=["latitude","longitude"],
         has_ext=False,
-        batch_size=2,
+        batch_size=1,
         seed=42,
         shuffle=True,
         class_mode="other",
@@ -95,7 +96,7 @@ def main():
         x_col="id",
         y_col=["latitude", "longitude"],
         has_ext=False,
-        batch_size=2,
+        batch_size=1,
         seed=42,
         shuffle=True,
         class_mode="other",
