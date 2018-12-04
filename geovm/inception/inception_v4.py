@@ -187,6 +187,7 @@ def inception_v4_base(input):
     else:
         channel_axis = -1
 
+    #input = preprocess_input(input)
     # Input Shape is 299 x 299 x 3 (th) or 3 x 299 x 299 (th)
     net = conv2d_bn(input, 32, 3, 3, strides=(2,2), padding='valid')
     net = conv2d_bn(net, 32, 3, 3, padding='valid')
@@ -258,6 +259,7 @@ def inception_v4(num_classes, dropout_keep_prob, weights, include_top, weights_p
         inputs = Input((299, 299, 3))
 
     # Make inception base
+    #inputs = preprocess_input(inputs)
     x = inception_v4_base(inputs)
 
 

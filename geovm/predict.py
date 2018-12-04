@@ -17,7 +17,7 @@ from keras.models import load_model
 from closest_location import closest
 
 # If you want to use a GPU set its index here
-os.environ['CUDA_VISIBLE_DEVICES'] = ''
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 
 def main():
@@ -26,11 +26,12 @@ def main():
     model_fn = "network-weights/geo_regression_latlong.h5"
     size = 10
     find_closest = True
+    num_test = 100
 
     # Contains the image file names, along with the targets
     # batch size needs to be a multiple of the # of images
     df  = pd.read_csv(metadata_dir, nrows=size)
-    test_df = df[:64]
+    test_df = df[:num_test]
     datagen = ImageDataGenerator(rescale=1. / 255.)
     test_generator = datagen.flow_from_dataframe(
         dataframe=test_df,
@@ -38,7 +39,7 @@ def main():
         x_col="id",
         y_col=None,
         has_ext=False,
-        batch_size=2,
+        batch_size=1,
         seed=42,
         shuffle=False,
         class_mode=None,
@@ -49,13 +50,36 @@ def main():
     pred = model.predict_generator(test_generator, verbose=1, steps=STEP_SIZE_TEST)
     print("Finished predicting")
     #print(list(pred))
+    # Save the best prediction and worst prediction
+    errors = []
+    print("predictions", pred)
+    index = 0
     for pair in list(pred):
         latitude = pair[0]
         longitude = pair[1]
-        print(latitude, longitude)
-        if find_closest:
-            output_fn = "closest_image_dfs/" + str(round(latitude)) + str(round(longitude)) + ".csv"
-            closest(latitude=latitude, longitude=longitude, output_fn=output_fn)
+        # print(latitude, longitude)
+        real_lat = df[index]['latitude']
+        real_long = df[index]['longitude']
+        error = pow((latitude - real_lat), 2) + pow((longitude - real_long), 2)
+        errors.append(error)
+        index += 1
+
+    output = pd.DataFrame()
+    output['errors'] = errors
+    output['id'] = df['id'][:num_test]
+    output['latitude'] = df['latitude'][:num_test]
+    output['longitude'] = df['longitude'][:num_test]
+    output['lat_preds'] = [p[0] for p in list(pred)]
+    output['long_preds'] = [p[1] for p in list(pred)]
+
+    output_sorted = output.sort_values(by=['errors'], ascending=True)
+    print("Best output", output_sorted[0])
+    print("Worst output", output_sorted[-1])
+    output_sorted.to_csv("closest_image_dfs/predictions.csv")
+
+        #if find_closest:
+            #output_fn = "closest_image_dfs/" + str(round(latitude)) + str(round(longitude)) + ".csv"
+            #closest(latitude=latitude, longitude=longitude, output_fn=output_fn)
     K.clear_session()
 
 

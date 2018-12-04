@@ -41,14 +41,13 @@ def remove_broken_links(fn, threshold=5000):
 def main():
     # https://medium.com/@vijayabhaskar96/tutorial-on-keras-flow-from-dataframe-1fd4493d237c
     # Use better and more images, at least take the ones without anything
-    """TODO: Save only weights from geolocation regression model. Try sigmoid activation * max_value"""
 
     image_dir = "geoimages_all/"
     metadata_dir = "geoimages_regional/photo_metadata.csv"
     wp = "network-weights/inception-v4_weights_tf_dim_ordering_tf_kernels_notop.h5"
     epochs = 100
-    output_fn = "network-weights/10kimages__100epochs_all_model.h5"
-    history_fn = "network-weights/history_10k_100epochs_all"
+    output_fn = "network-weights/100kimages__100epochs_all_model_preprocessed.h5"
+    history_fn = "network-weights/history_100k_100epochs_all_preprocessed"
 
     # Create model and load pre-trained weights
     model = inception_v4.create_model(weights='imagenet', include_top=False, weights_path=wp)
@@ -63,7 +62,7 @@ def main():
     model.compile(optimizer='rmsprop', loss='mse')
     print("compiled model")
 
-    size = 10000
+    size = 100000
     train_test_ratio = 0.8
     train_val_ratio = 0.8
     end = int(size * train_test_ratio)
@@ -76,7 +75,7 @@ def main():
     test_df = df[end:]
 
 
-    datagen = ImageDataGenerator(rescale=1. / 255., featurewise_center=True, featurewise_std_normalization=True)
+    datagen = ImageDataGenerator(rescale=1./255, featurewise_center=True, featurewise_std_normalization=True)
 
     train_generator = datagen.flow_from_dataframe(
         dataframe=train_df,
@@ -116,6 +115,7 @@ def main():
 
     STEP_SIZE_TRAIN = train_generator.n // train_generator.batch_size
     STEP_SIZE_VALID = valid_generator.n // valid_generator.batch_size
+    STEP_SIZE_TEST = test_generator.n // test_generator.batch_size
     start = time.time()
     history = model.fit_generator(generator=train_generator, steps_per_epoch=STEP_SIZE_TRAIN,
                                   validation_data=valid_generator, validation_steps=STEP_SIZE_VALID, epochs=epochs, callbacks=callbacks_list)
@@ -137,8 +137,7 @@ def main():
     with open(history_fn, 'wb') as f:
         pickle.dump(history, f)
     print("saved model")
-    evaluation = model.evaluate_generator(test_generator, verbose=1)
-    print("evaluated model")
+    evaluation = model.evaluate_generator(test_generator, verbose=1, steps=STEP_SIZE_TEST)
     K.clear_session()
 
 
