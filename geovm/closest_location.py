@@ -22,7 +22,7 @@ def closest(fn="geoimages_regional/10kimages.csv", image_fn= "images.csv", latit
 
     for chunk_index, df in enumerate(reader):
         #print("Chunk #:", chunk_index)
-        df = df.sample(frac=0.1, replace=False)
+        df = df.sample(frac=1, replace=False)
         for index, row in df.iterrows():
             lat = row['latitude']
             lon = row['longitude']
@@ -32,8 +32,9 @@ def closest(fn="geoimages_regional/10kimages.csv", image_fn= "images.csv", latit
             if distance < best_distance:
                 best_distance = distance
                 best_index = index
-        if chunk_index > 1000:
-            break
+        
+        #if chunk_index > 1000:
+            #break
     print("Closest distance:", best_distance)
     #print("Index", best_index)
     df_distance['id'] = fn_list
@@ -49,8 +50,9 @@ def closest(fn="geoimages_regional/10kimages.csv", image_fn= "images.csv", latit
             fn = str(sorted_df['id'][i]) + ".jpg"
             try:
                 im = Image.open("geoimages_all" + "/" + fn)
-                im.save(im_out + "/" + fn)
+                #im.save(im_out + "/" + fn)
                 count += 1
+                #print("file found")
                 if count > n_images:
                     break
             except FileNotFoundError:
@@ -110,8 +112,8 @@ def main(argv):
                 best_index = index
         if chunk_index > 1000:
             break
-    print("Closest distance:", best_distance)
-    print("Index", best_index)
+    #print("Closest distance:", best_distance)
+    #print("Index", best_index)
     df_distance['id'] = fn_list
     df_distance['distance'] = distance_list
     sorted_df = df_distance.sort_values(by='distance', ascending=True)
@@ -124,7 +126,7 @@ def main(argv):
             fn = str(sorted_df['id'][i]) + ".jpg"
             try:
                 im = Image.open("geoimages_all" + "/" + fn)
-                im.save("closest_images" + "/" + fn)
+                #im.save("closest_images/" + fn)
                 count += 1
                 if count > 10:
                     break
@@ -135,5 +137,15 @@ def main(argv):
 
 if __name__ == "__main__":
     #main(sys.argv[1:])
-    closest()
+    df = pd.read_csv("closest_image_dfs/predictions_3.csv")
+    ids = ['6385911009.jpg', '6341360361.jpg', '6341358361.jpg', '3569191177.jpg', '3570004142.jpg', '3570003476.jpg']
+    for name in ids:
+        output_fn = "closest_image_dfs/" + name[:-4] + "predictions" + ".csv"
+        im_out = "closest_images/" + name
+        real_lat = df.loc[df['id'] == int(name[:-4])]['lat_preds'].values[0]
+        real_long = df.loc[df['id'] == int(name[:-4])]['long_preds'].values[0]
+        print(real_lat)
+        print(real_long)
+        closest(output_fn=output_fn, im_out=im_out, latitude=real_lat, longitude=real_long)
+        print("Finished for one image")
 

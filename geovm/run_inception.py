@@ -45,24 +45,26 @@ def main():
     image_dir = "geoimages_all/"
     metadata_dir = "geoimages_regional/photo_metadata.csv"
     wp = "network-weights/inception-v4_weights_tf_dim_ordering_tf_kernels_notop.h5"
-    epochs = 100
-    output_fn = "network-weights/100kimages__100epochs_all_model_preprocessed.h5"
-    history_fn = "network-weights/history_100k_100epochs_all_preprocessed"
+    epochs = 1000
+    output_fn = "network-weights/1kimages_50epochs.h5"
+    history_fn = "network-weights/history_1k_50epochs"
 
     # Create model and load pre-trained weights
-    model = inception_v4.create_model(weights='imagenet', include_top=False, weights_path=wp)
+    wf = 'imagenet'
+    wf = 'custom'
+    model = inception_v4.create_model(weights=wf, include_top=False, weights_path=wp)
     print("loaded model")
 
     callbacks_list = [callbacks.EarlyStopping(monitor='val_loss', patience=10), callbacks.ModelCheckpoint(filepath=output_fn, monitor='val_loss', save_best_only=True,), callbacks.TensorBoard(log_dir='my_log_dir')]
 
     # Freeze the inception base, going to just train the dense network
-    for i in range(0, len(model.layers) - 1):
-         model.layers[i].trainable = False
+    #for i in range(0, len(model.layers) - 1):
+         #model.layers[i].trainable = False
 
     model.compile(optimizer='rmsprop', loss='mse')
     print("compiled model")
 
-    size = 100000
+    size = 1000
     train_test_ratio = 0.8
     train_val_ratio = 0.8
     end = int(size * train_test_ratio)
@@ -101,21 +103,21 @@ def main():
         class_mode="other",
         target_size=(299, 299))
 
-    test_generator = datagen.flow_from_dataframe(
-        dataframe=test_df,
-        directory=image_dir,
-        x_col="id",
-        y_col=None,
-        has_ext=False,
-        batch_size=1,
-        seed=42,
-        shuffle=False,
-        class_mode=None,
-        target_size=(299, 299))
+    #test_generator = datagen.flow_from_dataframe(
+        #dataframe=test_df,
+        #directory=image_dir,
+        #x_col="id",
+        #y_col=None,
+        #has_ext=False,
+        #batch_size=1,
+        #seed=42,
+        #shuffle=False,
+        #class_mode=None,
+        #target_size=(299, 299))
 
     STEP_SIZE_TRAIN = train_generator.n // train_generator.batch_size
     STEP_SIZE_VALID = valid_generator.n // valid_generator.batch_size
-    STEP_SIZE_TEST = test_generator.n // test_generator.batch_size
+    #STEP_SIZE_TEST = test_generator.n // test_generator.batch_size
     start = time.time()
     history = model.fit_generator(generator=train_generator, steps_per_epoch=STEP_SIZE_TRAIN,
                                   validation_data=valid_generator, validation_steps=STEP_SIZE_VALID, epochs=epochs, callbacks=callbacks_list)
@@ -137,7 +139,7 @@ def main():
     with open(history_fn, 'wb') as f:
         pickle.dump(history, f)
     print("saved model")
-    evaluation = model.evaluate_generator(test_generator, verbose=1, steps=STEP_SIZE_TEST)
+    #evaluation = model.evaluate_generator(test_generator, verbose=1, steps=STEP_SIZE_TEST)
     K.clear_session()
 
 
